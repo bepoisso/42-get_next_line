@@ -6,56 +6,38 @@
 /*   By: bepoisso <bepoisso@student.42perpignan.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/26 01:43:01 by bepoisso          #+#    #+#             */
-/*   Updated: 2024/08/26 15:44:44 by bepoisso         ###   ########.fr       */
+/*   Updated: 2024/08/26 23:16:10 by bepoisso         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line.h"
-#include <unistd.h>
-#include <fcntl.h>
-#include <stdlib.h>
 
-int	ft_lstsize(t_list *lst)
+int	ft_strlen(const char *s)
 {
 	int	i;
 
 	i = 0;
-	while (lst)
-	{
-		lst = lst->next;
+	while (s[i])
 		i++;
-	}
 	return (i);
 }
 
-t_list	*ft_lstlast(t_list *lst)
+char	*ft_strdup(const char *s)
 {
-	int	i;
-	int	size;
+	char	*dest;
+	int		i;
 
 	i = 0;
-	size = ft_lstsize(lst);
-	while (i < size - 1)
+	dest = malloc(sizeof(char) * (ft_strlen(s) + 1));
+	if (!dest)
+		return (NULL);
+	while (s[i])
 	{
-		lst = lst->next;
+		dest[i] = s[i];
 		i++;
 	}
-	return (lst);
-}
-
-void	ft_lstadd_back(t_list **lst, t_list *new)
-{
-	t_list	*last;
-
-	if (!lst)
-		return ;
-	if (!*lst)
-	{
-		*lst = new;
-		return ;
-	}
-	last = ft_lstlast(*lst);
-	last->next = new;
+	dest[i] = '\0';
+	return (dest);
 }
 
 t_list	*ft_lstnew(char *content)
@@ -70,34 +52,19 @@ t_list	*ft_lstnew(char *content)
 	return (new);
 }
 
-size_t	ft_strlen(const char *s)
+void	ft_lstadd_back(t_list **lst, t_list *new)
 {
-	int	i;
+	t_list	*last;
 
-	i = 0;
-	while (s[i])
-		i++;
-	return (i);
-}
-
-size_t	ft_strlcat(char *dst, const char *src, size_t size)
-{
-	size_t	dst_len;
-	size_t	src_len;
-	size_t	i;
-
-	dst_len = ft_strlen(dst);
-	src_len = ft_strlen(src);
-	i = 0;
-	if (size <= dst_len)
-		return (size + src_len);
-	while (src[i] && (dst_len + i) < (size - 1) && src[i - 1] != '\n')
+	if (!*lst)
+		*lst = new;
+	else
 	{
-		dst[dst_len + i] = src[i];
-		i++;
+		last = *lst;
+		while (last->next)
+			last = last->next;
+		last->next = new;
 	}
-	dst[dst_len + i] = '\0';
-	return (dst_len + src_len);
 }
 
 int	check_newline(t_list *list)
@@ -107,7 +74,7 @@ int	check_newline(t_list *list)
 	while (list)
 	{
 		i = 0;
-		while(list->stash[i])
+		while (list->stash[i])
 		{
 			if (list->stash[i] == '\n')
 				return (1);
@@ -127,12 +94,11 @@ int	lst_size_char(t_list *list)
 	while (list)
 	{
 		i = 0;
-		while(list->stash[i])
+		while (list->stash[i])
 		{
 			count++;
-			if (list->stash[i] == '\n')
+			if (list->stash[i++] == '\n')
 				return (count);
-			i++;
 		}
 		list = list->next;
 	}
@@ -142,98 +108,137 @@ int	lst_size_char(t_list *list)
 void	save_buff(char *buff, t_list **list)
 {
 	t_list	*new;
+	char	*content_copy;
 
-	new = ft_lstnew(buff);
-	if (!new)
+	buff[BUFFER_SIZE] = '\0';
+	content_copy = ft_strdup(buff);
+	if (!content_copy)
 		return ;
-	if (!*list)
-		ft_lstadd_back(list, new);
-	else if (!check_newline(*list))
-		ft_lstadd_back(list, new);
-}
-
-char	*ft_get_line(t_list **list)
-{
-	char	*dest;
-	t_list	*current;
-
-	current = *list;
-	dest = malloc(sizeof(char) * (lst_size_char(*list) + 1));
-	if (!dest)
-		return (NULL);
-	while (current)
+	new = ft_lstnew(content_copy);
+	if (!new)
 	{
-		ft_strlcat(dest, current->stash, BUFFER_SIZE);
-		current = current->next;
+		free(content_copy);
+		return ;
 	}
-	return (dest);
+	ft_lstadd_back(list, new);
 }
 
-t_list *clean_lst(t_list **list)
+char	*ft_get_line(t_list *list)
+{
+	char	*line;
+	int		i;
+	int		j;
+
+	line = malloc(sizeof(char) * (lst_size_char(list) + 1));
+	if (!line)
+		return (NULL);
+	i = 0;
+	while (list)
+	{
+		j = 0;
+		while (list->stash[j] && list->stash[j] != '\n')
+			line[i++] = list->stash[j++];
+		if (list->stash[j] == '\n')
+		{
+			line[i++] = '\n';
+			break ;
+		}
+		list = list->next;
+	}
+	line[i] = '\0';
+	return (line);
+}
+
+t_list	*clean_lst(t_list **list)
 {
 	t_list	*current;
 	t_list	*temp;
 	int		i;
-	int		j;
-	char	temp_char[2048];
+	char	*temp_char;
 
-	i = 0;
-	j = 0;
 	current = *list;
-	while (current->next)
+	while (current && current->next)
 	{
 		temp = current->next;
 		free(current->stash);
 		free(current);
 		current = temp;
 	}
-	while (current->stash[i] != '\n' && current->stash[i])
+	i = 0;
+	while (current->stash[i] && current->stash[i] != '\n')
 		i++;
-	while (current->stash[i])
-		temp_char[j++] = current->stash[i++];
-	temp_char[j] = '\0';
+	if (current->stash[i] == '\n')
+		i++;
+	temp_char = ft_strdup(current->stash + i);
 	free(current->stash);
 	free(current);
-	free(temp);
-	return (ft_lstnew(temp_char));
+	if (temp_char)
+		*list = ft_lstnew(temp_char);
+	else
+		*list = NULL;
+	return (*list);
 }
 
 char	*get_next_line(int fd)
 {
-	char	*next_line;
-	char	*buff;
-	int		read_char;
+	char		*buff;
 	static t_list	*list;
+	char		*line;
+	int			read_char;
 
-	read_char = 1;
-	buff = malloc(sizeof(char)* BUFFER_SIZE + 1);
+	if (fd < 0 || BUFFER_SIZE <= 0)
+		return (NULL);
+	buff = malloc(sizeof(char) * (BUFFER_SIZE + 1));
 	if (!buff)
 		return (NULL);
-	while (read_char)
+	read_char = 1;
+	while (!check_newline(list) && read_char > 0)
 	{
 		read_char = read(fd, buff, BUFFER_SIZE);
-		save_buff(buff, &list);
-		if (lst_size_char(list) == 0)
+		if (read_char == -1)
 		{
-			next_line = ft_get_line(&list);
-			list = clean_lst(&list);
+			free(buff);
+			while (list)
+			{
+				t_list *temp = list->next;
+				free(list->stash);
+				free(list);
+				list = temp;
+			}
+			return (NULL);
 		}
+		buff[read_char] = '\0';
+		save_buff(buff, &list);
 	}
-	return (next_line);
+	free(buff);
+	if (!list)
+		return (NULL);
+	line = ft_get_line(list);
+	list = clean_lst(&list);
+	if (!line || (read_char == 0 && !list))
+	{
+		free(line);
+		return (NULL);
+	}
+	return (line);
 }
 
-#include <stdio.h>
-int main()
-{
-	char *str;
-	int fd;
 
-	fd = open("txt.test", O_RDONLY);
-	if (fd == -1)
-		return (printf("Erreur d'ouvertur du fichier\n"), 1);
-	str = get_next_line(fd);
-	if (str == NULL)
-		return (printf("Erreur de recuperation\n"), 1);
-	printf("%s\n", str);
-	return (0);
-}
+// #include <stdio.h>
+// int main()
+// {
+// 	char *str;
+// 	int fd;
+
+// 	fd = open("txt.test", O_RDONLY);
+// 	if (fd == -1)
+// 		return (printf("Erreur d'ouvertur du fichier\n"), 1);
+// 	while (str)
+// 	{
+// 		str = get_next_line(fd);
+// 		if (str == NULL)
+// 			break ;
+// 		printf("%s", str);
+// 	}
+// 	return (0);
+// }
