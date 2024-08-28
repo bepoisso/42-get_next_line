@@ -6,38 +6,46 @@
 /*   By: bepoisso <bepoisso@student.42perpignan.    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/08/27 16:53:44 by bepoisso          #+#    #+#             */
-/*   Updated: 2024/08/27 19:00:10 by bepoisso         ###   ########.fr       */
+/*   Updated: 2024/08/28 16:43:30 by bepoisso         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line.h"
 
+size_t	ft_strlcpy(char *dst, const char *src, size_t size)
+{
+	size_t	i;
+
+	i = 0;
+	if (size == 0)
+		return (ft_strlen(src));
+	while (src[i] && i < size - 1)
+	{
+		dst[i] = src[i];
+		i++;
+	}
+	dst[i] = '\0';
+	return (ft_strlen(src));
+}
+
 void	substract_and_save(char **stash, char **line)
 {
-	int	i;
-	int	j;
-	char *temp;
+	int		i;
+	char	*temp;
 
-	j = 0;
 	i = 0;
-	temp = malloc(ft_strlen(*stash) + 1);
-	*line = malloc(ft_strlen(*stash) + 1);
-	if (!*line || !temp)
-		return ;
-	while ((*stash)[i] != '\n')
-	{
-		(*line)[i] = (*stash)[i];
+	while ((*stash)[i] && (*stash)[i] != '\n')
 		i++;
-	}
-	(*line)[i] = '\n';
-	(*line)[++i] = '\0';
-	while ((*stash)[i])
-	{
-		temp[j] = (*stash)[i];
+	*line = malloc(i + 2);
+	if (!*line)
+		return (free(*stash));
+	ft_strlcpy(*line, *stash, i + 2);
+	if ((*stash)[i] == '\n')
 		i++;
-		j++;
-	}
-	temp[j] = '\0';
+	temp = ft_strdup(*stash + i);
+	if (!temp)
+		return (free(*line), free(*stash));
+	free(*stash);
 	*stash = temp;
 }
 
@@ -47,53 +55,51 @@ char	*get_next_line(int fd)
 	int			readed;
 	char		*line;
 	static char	*stash;
+	char		*temp_stash;
 
-	readed = 1;
+	line = NULL;
 	buff = malloc(sizeof(char) * (BUFFER_SIZE + 1));
+	if (!buff || (fd < 0 || BUFFER_SIZE <= 0))
+		return (free(buff), free(stash), stash = NULL, NULL);
 	if (!stash)
 		stash = ft_strdup("");
-	if (fd < 0 || BUFFER_SIZE <= 0 || !buff || !stash)
-		return (NULL);
-	while (readed != 0)
+	while (line == NULL)
 	{
 		readed = read(fd, buff, BUFFER_SIZE);
-		//On cherche si on trouve un '/n' dans buff
-		if (ft_strchr(buff, '\n') != NULL)
-		{
-			//on ajoute le contenu de buff dans stash
-			//on mets stash dans line
-			//on mets le reste apres '/n' dans stash
-			stash = ft_strjoin(stash, buff);
+		if (readed == -1 || (readed == 0 && stash[0] == '\0'))
+			return (free(buff), free(stash), stash = NULL, NULL);
+		buff[readed] = '\0';
+		temp_stash = ft_strjoin(stash, buff);
+		free(stash);
+		stash = temp_stash;
+		if (ft_strchr(stash, '\n') || readed == 0)
 			substract_and_save(&stash, &line);
-			return (line);
-		}
-		else
-		{
-			//on ajoute le contenue de buff dans stash
-			stash = ft_strjoin(stash, buff);
-		}
 	}
-	return (NULL);
+	return (free(buff), line);
 }
 
 // #include <stdio.h>
 // #include <fcntl.h>
+
 // int main()
 // {
 // 	char *next_line = "";
 // 	int	fd = 0;
-// 	int i = 0;
 
 // 	fd = open("txt.test", O_RDONLY);
 // 	if (fd < 0)
+// 	{
 // 		printf("FAIL OPEN FILES\n");
+// 		return (1);
+// 	}
 // 	while(1)
 // 	{
 // 		next_line = get_next_line(fd);
 // 		if (!next_line)
-// 			return (0);
+// 			break;
 // 		printf("%s", next_line);
-// 		i++;
+// 		free(next_line);
 // 	}
+// 	close(fd);
 // 	return (0);
 // }
