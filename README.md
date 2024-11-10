@@ -1,10 +1,15 @@
 <div align="center">
-  <img height="300" src="https://cdn.discordapp.com/attachments/783829038665433099/1278722693448859765/Black_And_White_Modern_Typographic_Simple_Virus_Apparel_Logo_2.png?ex=66d1d6cf&is=66d0854f&hm=63a3cec0ed11ffc7be129d79e3b1d5e332b8d3c8ee88ca8ff76f463eb119b070&"  />
+  <img height="200" src="https://raw.githubusercontent.com/Benjamin-poisson/My_image_bank/refs/heads/main/gnl.png"  />
 </div>
 
 # Get Next Line - Line Reading Function
 
 Get Next Line is a project that focuses on developing a function to read a single line from a file descriptor. This exercise introduces you to handling file input, managing static variables, and dealing with various buffer sizes in C.
+
+## Status
+<div align="center">
+  <img height="200" src="https://raw.githubusercontent.com/Benjamin-poisson/My_image_bank/refs/heads/main/gnl_succes.png"  />
+</div>
 
 ## Objectives
 
